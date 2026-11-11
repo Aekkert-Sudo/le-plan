@@ -516,7 +516,7 @@ const CHIPS_EDV=['Wohnzimmer','Schlafzimmer','Kinderzimmer 1','Kinderzimmer 2','
 /* ---------- model ---------- */
 const liste=(title,n,t=[])=>({id:uid(),kind:'liste',title,n,t:Array.from({length:n},(_,i)=>t[i]||'')});
 const knx=(akt=[])=>({id:uid(),kind:'knx',title:'KNX Aktoren',akt});
-function blank(n=36){return {app:'lebeschriftung',id:uid(),meta:{projekt:'',verteiler:'',ort:''},te:12,secs:[liste('Verteiler Beschriftung',n)]};}
+function blank(n=30){return {app:'lebeschriftung',id:uid(),meta:{projekt:'',verteiler:'',ort:''},te:12,secs:[liste('Verteiler Beschriftung',n)]};}
 function settings(){return {mail:'andreas-ekkert@online.de',...J(KEY+'.set',{})};}
 const st={doc:null,sec:0,sel:null,view:'list',span:1,hist:[],touched:false};
 const pname=d=>[d.meta.projekt,d.meta.verteiler].filter(Boolean).join(' · ')||'Neue Beschriftung';
@@ -627,12 +627,12 @@ function sheet(title,html,tabs=''){layer.innerHTML=`<div class="scrim" data-clos
   layer.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click',closeSheet));return layer.querySelector('.sheet');}
 function arm(b,txt){if(b.classList.contains('armed'))return true;const o=b.innerHTML;b.classList.add('armed');if(b.classList.contains('ib'))toast('Zum Löschen noch einmal tippen');else b.textContent=txt;setTimeout(()=>{if(b.isConnected){b.classList.remove('armed');b.innerHTML=o;}},3500);return false;}
 function openAddSec(){
-  const sh=sheet('Abschnitt hinzufügen',`<div class="list"><button class="btn" data-a="vt36">Verteiler 1–36</button><button class="btn" data-a="vt72">Verteiler 1–72</button><button class="btn" data-a="knx">KNX Aktoren mit Kanälen</button><button class="btn" data-a="edv">EDV Beschriftung 1–36</button></div>
+  const sh=sheet('Abschnitt hinzufügen',`<div class="list"><button class="btn" data-a="vt30">Verteiler 1–30</button><button class="btn" data-a="vt60">Verteiler 1–60</button><button class="btn" data-a="knx">KNX Aktoren mit Kanälen</button><button class="btn" data-a="edv">EDV Beschriftung 1–30</button></div>
    <div class="lbl">Aktueller Abschnitt</div><label class="f">Überschrift<input class="in" id="sT" value="${esc(sec().title)}"></label>
    <div class="row" style="margin-top:12px"><button class="btn warnb" data-delsec ${st.doc.secs.length<2?'disabled':''}>Abschnitt löschen</button></div>`);
   sh.addEventListener('input',e=>{if(e.target.id==='sT'){sec().title=e.target.value;st.touched=true;persist();render();}});
   sh.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.hasAttribute('data-close'))return;
-    if(b.dataset.a){hist();const a=b.dataset.a;st.doc.secs.push(a==='knx'?knx():a==='edv'?liste('EDV Beschriftung',36):liste('Verteiler Beschriftung',a==='vt72'?72:36));st.sec=st.doc.secs.length-1;st.sel=null;changed();closeSheet();}
+    if(b.dataset.a){hist();const a=b.dataset.a;st.doc.secs.push(a==='knx'?knx():a==='edv'?liste('EDV Beschriftung',30):liste('Verteiler Beschriftung',a==='vt60'?60:30));st.sec=st.doc.secs.length-1;st.sel=null;changed();closeSheet();}
     else if(b.hasAttribute('data-delsec')){if(!arm(b,'Wirklich löschen?'))return;hist();st.doc.secs.splice(st.sec,1);st.sec=0;st.sel=null;changed();closeSheet();}});
 }
 let mTab='proj';
@@ -645,17 +645,17 @@ function reMenu(){const b=layer.querySelector('.sh-body');if(b)b.innerHTML=menuB
 function menuBody(){const d=st.doc,s=settings();
   if(mTab==='proj'){const idx=readIndex().sort((a,b)=>(b.ts||0)-(a.ts||0));const ts=d.ts?new Date(d.ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'noch nicht';
     return `<div class="row" style="margin-top:6px"><button class="btn pri" data-save>Speichern</button><span class="note" style="margin:0;flex:1;min-width:180px">Speichert auf diesem Gerät. Zuletzt: ${ts}. Passiert auch automatisch.</span></div>
-    <div class="lbl">Neue Beschriftung</div><div class="row"><button class="btn" data-new="36">Leer 1–36</button><button class="btn" data-new="72">Leer 1–72</button></div>
+    <div class="lbl">Neue Beschriftung</div><div class="row"><button class="btn" data-new="30">Leer 1–30</button><button class="btn" data-new="60">Leer 1–60</button></div>
     <div class="lbl">Meine Beschriftungen</div><div class="list">${idx.map(p=>`<div class="li ${p.id===d.id?'cur':''}"><button class="nm" data-open="${p.id}">${esc(p.name)}</button><span class="no">${new Date(p.ts||0).toLocaleDateString('de-DE')}</span>${p.id===d.id?'':`<button class="ib dang" data-del="${p.id}" aria-label="Löschen">${TRASH}</button>`}</div>`).join('')||'<p class="note">Noch nichts gespeichert.</p>'}</div>
     <div class="lbl">Meine Vorlagen</div><div class="row"><button class="btn" data-savetpl>Aktuelle als Vorlage speichern</button></div>
     <div class="list">${readTpl().map(t=>`<div class="li"><button class="nm" data-tpl="${t.id}">${esc(t.name)}</button><button class="ib dang" data-deltpl="${t.id}" aria-label="Vorlage löschen">${TRASH}</button></div>`).join('')||'<p class="note">Noch keine eigene Vorlage. Eine Vorlage ist eine Kopie, die du immer wieder öffnen kannst.</p>'}</div>
     <div class="lbl">Beispiele aus deiner Excel</div><div class="list">${EX.map((t,i)=>`<div class="li"><button class="nm" data-ex="${i}">${esc(t.name)}</button></div>`).join('')}</div>`;}
-  if(mTab==='meta')return `<p class="note">Steht klein über der Liste im Ausdruck.</p>
+  if(mTab==='meta')return `<p class="note">Nur für den Namen des Projekts in der App und der PDF-Datei. Im Ausdruck steht es nicht.</p>
     <label class="f">Bauvorhaben / Kunde<input class="in" data-meta="projekt" value="${esc(d.meta.projekt)}"></label>
     <label class="f">Verteiler<input class="in" data-meta="verteiler" value="${esc(d.meta.verteiler)}" placeholder="z. B. UV Wohnung 3"></label>
     <label class="f">Ort<input class="in" data-meta="ort" value="${esc(d.meta.ort)}"></label>`;
   if(mTab==='send')return `<p class="note">Erzeugt ein PDF wie deine Excel-Vorlage mit dem Firmenlogo oben, fertig zum Ausdrucken.</p>
-    <div class="lbl">Ausdruck</div><div class="row"><button class="chip" data-cols="1" aria-pressed="${(d.cols||2)===1}">Einspaltig (A4 hoch, 45)</button><button class="chip" data-cols="2" aria-pressed="${(d.cols||2)===2}">Zweispaltig (A4 quer, 2 × 36)</button></div>
+    <div class="lbl">Ausdruck</div><div class="row"><button class="chip" data-cols="1" aria-pressed="${(d.cols||2)===1}">Einspaltig (A4 hoch, 30)</button><button class="chip" data-cols="2" aria-pressed="${(d.cols||2)===2}">Zweispaltig (A4 quer, 2 × 30)</button></div>
     <label class="f">An E-Mail-Adresse<input class="in" id="mMail" value="${esc(s.mail)}" inputmode="email"></label>
     <div class="list" style="margin-top:12px"><button class="btn pri" data-mail>PDF per Mail senden</button><button class="btn" data-pdf>PDF speichern</button></div>
     <p class="note">Am Telefon öffnet sich das Teilen-Menü: dort „Mail“ wählen und ${esc(s.mail)} als Empfänger eintragen. Am Rechner wird das PDF gespeichert und eine Mail vorbereitet.</p>`;
@@ -688,20 +688,19 @@ function buildPDF(){
   if(!window.jspdf)throw new Error('nolib');
   const d=st.doc,two=(d.cols||2)===2,ori=two?'landscape':'portrait';
   const pdf=new window.jspdf.jsPDF({orientation:ori,unit:'mm',format:'a4',compress:true});
-  const PER=two?36:45,RH=two?4.55:5.3,CW=two?128:160,NW=11,XS=two?[14,155]:[25],Y0=two?6:8,LH=two?23:27,GAP=4.6;let first=true;
+  const PER=30,RH=two?5.5:8,FS=two?10.5:12,CW=two?128:160,NW=13,XS=two?[14,155]:[25],Y0=two?6:8,LH=two?23:27,GAP=4.6;let first=true;
   const sub=[d.meta.projekt,d.meta.verteiler,d.meta.ort].filter(Boolean).join(' · ');
   d.secs.forEach(s=>{const rows=pdfRows(s);if(!rows.length)return;
     for(let p=0;p*PER<rows.length;p++){const col=p%XS.length;if(col===0){if(!first)pdf.addPage('a4',ori);first=false;}
       const x=XS[col];pdf.setDrawColor(0);pdf.setTextColor(0);pdf.setLineWidth(0.25);pdf.rect(x,Y0,CW,LH);
       let iw=CW*0.8,ih=iw/LOGO_R;if(ih>LH-5){ih=LH-5;iw=ih*LOGO_R;}
       try{pdf.addImage(LOGO,'JPEG',x+(CW-iw)/2,Y0+(LH-ih)/2,iw,ih,'logo','FAST');}catch(e){pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.text('LEWIN & EKKERT ELEKTROTECHNIK',x+CW/2,Y0+LH/2+2,{align:'center'});}
-      pdf.setFontSize(7.5);pdf.setFont('helvetica','bold');pdf.text(s.title,x,Y0+LH+3.3);
-      if(sub){pdf.setFont('helvetica','normal');pdf.text(sub,x+CW,Y0+LH+3.3,{align:'right',maxWidth:CW*0.62});}
-      let y=Y0+LH+GAP;pdf.rect(x,y,NW,RH);pdf.rect(x+NW,y,CW-NW,RH);pdf.setFont('helvetica','bold');pdf.setFontSize(9);pdf.text('Nr.',x+NW/2,y+RH-1.3,{align:'center'});pdf.text('Bezeichnung',x+NW+(CW-NW)/2,y+RH-1.3,{align:'center'});
+      if(s.kind==='liste'){pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.text(s.title,x,Y0+LH+3.4);}
+      let y=Y0+LH+GAP;pdf.rect(x,y,NW,RH);pdf.rect(x+NW,y,CW-NW,RH);pdf.setFont('helvetica','bold');pdf.setFontSize(FS);const BL=RH/2+FS*0.125;pdf.text('Nr.',x+NW/2,y+BL,{align:'center'});pdf.text('Bezeichnung',x+NW+(CW-NW)/2,y+BL,{align:'center'});
       rows.slice(p*PER,(p+1)*PER).forEach(r=>{y+=RH;pdf.rect(x,y,NW,RH);pdf.rect(x+NW,y,CW-NW,RH);
-        pdf.setFont('helvetica','bold');pdf.setFontSize(9);if(r.nr)pdf.text(r.nr,x+NW/2,y+RH-1.3,{align:'center'});
-        pdf.setFont('helvetica','normal');let z=9.5;pdf.setFontSize(z);const t=String(r.text||'').replace(/\s+$/,'');while(z>6&&pdf.getTextWidth(t)>CW-NW-3){z-=.5;pdf.setFontSize(z);}
-        if(t)pdf.text(t,x+NW+1.5,y+RH-1.3,{maxWidth:CW-NW-2.5});});}
+        pdf.setFont('helvetica','bold');pdf.setFontSize(FS);if(r.nr)pdf.text(r.nr,x+NW/2,y+BL,{align:'center'});
+        pdf.setFont('helvetica','normal');let z=FS;pdf.setFontSize(z);const t=String(r.text||'').replace(/\s+$/,'');while(z>6&&pdf.getTextWidth(t)>CW-NW-3){z-=.5;pdf.setFontSize(z);}
+        if(t)pdf.text(t,x+NW+1.5,y+BL,{maxWidth:CW-NW-2.5});});}
   });
   if(first){pdf.setFontSize(12);pdf.text('Keine Einträge',20,20);}
   pdf.setProperties({title:'Verteiler Beschriftung '+pname(d)});return pdf;
@@ -718,7 +717,7 @@ async function sendPDF(mail){let pdf;try{pdf=buildPDF();}catch(e){toast('PDF kon
 /* ---------- examples from the Excel ---------- */
 const fill=(n,o)=>{const t=Array(n).fill('');Object.entries(o).forEach(([k,v])=>{const [a,b]=String(k).split('-').map(Number);for(let i=a;i<=(b||a);i++)t[i-1]=v;});return t;};
 const EX=[
- {name:'Wohnung 1–30',make(){const d=blank(30);d.meta.verteiler='Wohnung';d.secs=[liste('Verteiler Beschriftung',36,fill(36,{'1-3':'Herd Küche',4:'Küche',5:'Wohnzimmer',6:'Schlafzimmer/Büro',7:'Flur',8:'Steckdose Küche Arbeitsplatte',9:'Steckdose Backofen Küche',10:'Steckdose Mikrowelle Küche','13-15':'Fi-Schutzschalter','23-24':'Fi/LS Bad'}))];return d;}},
+ {name:'Wohnung 1–30',make(){const d=blank(30);d.meta.verteiler='Wohnung';d.secs=[liste('Verteiler Beschriftung',30,fill(30,{'1-3':'Herd Küche',4:'Küche',5:'Wohnzimmer',6:'Schlafzimmer/Büro',7:'Flur',8:'Steckdose Küche Arbeitsplatte',9:'Steckdose Backofen Küche',10:'Steckdose Mikrowelle Küche','13-15':'Fi-Schutzschalter','23-24':'Fi/LS Bad'}))];return d;}},
  {name:'Haus 1–60 mit KNX',make(){const d=blank(60);d.meta.verteiler='Einfamilienhaus';
    d.secs=[liste('Verteiler Beschriftung',60,fill(60,{'1-4':'Fi-Schutzschalter für Sicherung 5-12','5-7':'Herd Küche',8:'Kind 1 EG',9:'Flur/Heizraum/Außen Steckdose/Multimedia/WC EG',10:'Schlafzimmer EG',11:'Wohnzimmer EG / Treppe Flur UG',12:'Küche/Abstellraum','13-16':'Fi-Schutzschalter für Sicherung 17-36',17:'Steckdose Waschmaschine UG',18:'Steckdose Trockner UG',19:'Küche Insel Kühlschrank',20:'Bad/Abstellraum UG',21:'Steckdose Spülmaschine Küche Insel',22:'Steckdose Arbeit Küche Insel',23:'Saunaraum UG',24:'Kind 2 / Kind 3 UG',25:'Steckdose Mikrowelle Küche',26:'Steckdose Arbeit Küche',27:'Steckdose Backofen Küche',28:'Steckdose Kühlschrank Küche',29:'Heizung',30:'Sprechanlage','31-33':'Sauna UG','34-36':'Garten Strom','43-48':'Sprechanlage Trafo'})),
     knx([{lab:'A1',ch:['KNX Spannung für BUS']},{lab:'A2',ch:['Licht WC EG','Licht Flur EG','Licht Küche EG','Licht Esstisch EG']},{lab:'A3',ch:['Licht Eingang EG','Licht Treppenhaus EG','Licht Speisekammer EG','Licht Außen Weg Haus','Licht Terrasse Decke','Licht Büro OG','Licht Balkon OG','Licht Terrasse Wand']},{lab:'A4',ch:['Licht Wohnzimmer Kreis 1 EG','Licht Wohnzimmer Kreis 2 EG','Licht Gäste OG','Licht Deckenlicht Treppe OG']},{lab:'A6',ch:['Rollladen Schlafzimmer OG','Rollladen Schlafzimmer OG','Rollladen Galerie OG','Rollladen Galerie OG','Rollladen Gästezimmer OG','Rollladen Büro OG','Rollladen Büro OG','Rollladen Bad OG']},{lab:'A7',ch:['Rollladen Küche EG','Rollladen Wohnzimmer EG','Rollladen Wohnzimmer EG','Rollladen Wohnzimmer EG','Rollladen Wohnzimmer EG']},{lab:'A8',ch:['Fenster Kontakt','Fenster Kontakt','Fenster Kontakt','Fenster Kontakt','Fenster Kontakt','Fenster Kontakt']}])];return d;}},
@@ -732,7 +731,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(layer.innerHTML)
 window.addEventListener('pagehide',flush);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush();});
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 window.__leb={st,buildPDF,EX,load,blank};
-(function(){let d=null;const cur=store.get(KEY+'.cur');if(cur)d=J(KEY+'.doc.'+cur,null);if(!d||d.app!=='lebeschriftung')d=blank(36);d.meta={projekt:'',verteiler:'',ort:'',...d.meta};d.te=d.te||12;st.doc=d;render();})();
+(function(){let d=null;const cur=store.get(KEY+'.cur');if(cur)d=J(KEY+'.doc.'+cur,null);if(!d||d.app!=='lebeschriftung')d=blank(30);d.meta={projekt:'',verteiler:'',ort:'',...d.meta};d.te=d.te||12;st.doc=d;render();})();
 })();
 </script>
 
