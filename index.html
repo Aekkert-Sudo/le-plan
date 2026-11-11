@@ -1530,7 +1530,7 @@ function menuBody(){
         <button class="btn pri" data-mailpdf style="width:100%">${MAILI} PDF per Mail senden</button>
         <button class="btn" data-savepdf style="width:100%">${DLI} PDF speichern</button>
       </div>
-      <p class="note" id="sendnote">Am iPhone und iPad öffnet sich das Teilen-Menü: Tippe dort auf „Mail“. Die Adresse ${esc(s.mail)} wird vorgeschlagen, wenn du sie in „An“ einträgst. Am Rechner wird das PDF gespeichert und eine Mail an dich vorbereitet. Hänge das PDF dort an.</p>`;
+      <p class="note" id="sendnote">Am iPhone und iPad öffnet sich das Teilen-Menü: dort „Mail“ wählen. Die Adresse ${esc(s.mail)} wird vorher kopiert: in der Mail lange auf „An“ tippen und „Einsetzen“ wählen. Das Telefon erlaubt nicht, den Empfänger automatisch einzutragen, wenn ein PDF anhängt. Am Rechner wird das PDF gespeichert und eine Mail an dich vorbereitet.</p>`;
   }
   if(menuTab==='opt'){
     return `<p class="note">Diese Angaben werden in jeden neuen Verteiler übernommen.</p>
@@ -1574,7 +1574,7 @@ async function deliver(blob,name,mode){
     catch(err){if(err&&err.code==='declined'){toast('Speichern abgebrochen');return 'abort';}}}
   if(mode==='mail'||touch){
     try{const file=new File([blob],name,{type:blob.type||'application/octet-stream'});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name,text:mode==='mail'?`Verteilerplan ${projName(st.doc)}`:'Sicherung Verteilerplan'});toast(mode==='mail'?'Teilen-Menü geschlossen':'Fertig. Falls gewählt: „In Dateien sichern“');return 'shared';}}
+      if(navigator.canShare&&navigator.canShare({files:[file]})){if(mode==='mail'){const m=settings().mail;try{await navigator.clipboard.writeText(m);toast('Adresse kopiert: '+m+' – in der Mail bei „An“ einfügen');}catch(e){}}await navigator.share({files:[file],title:name,text:mode==='mail'?`Verteilerplan ${projName(st.doc)}`:'Sicherung Verteilerplan'});return 'shared';}}
     catch(err){if(err&&err.name==='AbortError')return 'abort';}
   }
   try{const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);

@@ -1,4 +1,4 @@
-const C='lebesch-20261111095506';
+const C='lebesch-20261111100719';
 const ROOT=new URL('./',self.location).pathname;
 const FILES=['./','index.html','manifest.webmanifest','icon-180.png','icon-192.png','icon-512.png'];
 const OWN=FILES.map(f=>new URL(f,self.location).pathname);
