@@ -518,7 +518,7 @@ const liste=(title,n,t=[])=>({id:uid(),kind:'liste',title,n,t:Array.from({length
 const knx=(akt=[])=>({id:uid(),kind:'knx',title:'KNX Aktoren',akt});
 function blank(n=30){return {app:'lebeschriftung',id:uid(),meta:{projekt:'',verteiler:'',ort:''},te:12,secs:[liste('Verteiler Beschriftung',n)]};}
 function settings(){return {mail:'andreas-ekkert@online.de',...J(KEY+'.set',{})};}
-const st={doc:null,sec:0,sel:null,view:store.get(KEY+'.view')||'list',span:1,hist:[],touched:false};
+const st={doc:null,sec:0,sel:null,view:'list',span:1,hist:[],touched:false};
 const pname=d=>[d.meta.projekt,d.meta.verteiler].filter(Boolean).join(' · ')||'Neue Beschriftung';
 const readIndex=()=>J(KEY+'.index',[]);
 let saveT=0;
@@ -541,8 +541,7 @@ function render(){
   const d=st.doc,s=sec();
   $('#tProj').textContent=pname(d);$('#tSub').textContent=s.title+(s.kind==='liste'?` · ${s.n} Plätze`:` · ${s.akt.length} Aktoren`);
   $('#bUndo').disabled=!st.hist.length;
-  bar.innerHTML=`<div class="seg" role="group" aria-label="Ansicht"><button data-view="list" aria-pressed="${st.view==='list'}">Liste</button><button data-view="board" aria-pressed="${st.view==='board'}">Verteiler</button></div>`+
-    d.secs.map((x,i)=>`<button class="tab" data-sec="${i}" aria-pressed="${i===st.sec}">${esc(x.title)}</button>`).join('')+`<button class="tab" data-addsec>+ Abschnitt</button>`;
+  bar.innerHTML=d.secs.map((x,i)=>`<button class="tab" data-sec="${i}" aria-pressed="${i===st.sec}">${esc(x.title)}</button>`).join('')+`<button class="tab" data-addsec>+ Abschnitt</button>`;
   const top=body.scrollTop;
   body.innerHTML=s.kind==='knx'?knxHTML(s):(st.view==='board'?boardHTML(s):listHTML(s));
   body.scrollTop=top;renderEd();
@@ -654,8 +653,7 @@ function menuBody(){const d=st.doc,s=settings();
   if(mTab==='meta')return `<p class="note">Steht klein über der Liste im Ausdruck.</p>
     <label class="f">Bauvorhaben / Kunde<input class="in" data-meta="projekt" value="${esc(d.meta.projekt)}"></label>
     <label class="f">Verteiler<input class="in" data-meta="verteiler" value="${esc(d.meta.verteiler)}" placeholder="z. B. UV Wohnung 3"></label>
-    <label class="f">Ort<input class="in" data-meta="ort" value="${esc(d.meta.ort)}"></label>
-    <div class="lbl">Ansicht „Verteiler“</div><div class="row"><span class="note" style="margin:0">Plätze pro Reihe:</span>${[12,18,24].map(n=>`<button class="chip" data-te="${n}" aria-pressed="${d.te===n}">${n}</button>`).join('')}</div>`;
+    <label class="f">Ort<input class="in" data-meta="ort" value="${esc(d.meta.ort)}"></label>`;
   if(mTab==='send')return `<p class="note">Erzeugt ein PDF wie deine Excel-Liste, fertig zum Ausdrucken.</p>
     <div class="lbl">Ausdruck</div><div class="row"><button class="chip" data-cols="1" aria-pressed="${(d.cols||2)===1}">Einspaltig (A4 hoch)</button><button class="chip" data-cols="2" aria-pressed="${(d.cols||2)===2}">Zweispaltig (A4 quer)</button></div>
     <label class="f">An E-Mail-Adresse<input class="in" id="mMail" value="${esc(s.mail)}" inputmode="email"></label>
