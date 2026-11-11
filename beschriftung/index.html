@@ -66,6 +66,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;-webkit-overflow-scrolling:touch}
 .chips.wrap{flex-wrap:wrap;max-height:112px;overflow-y:auto}
 .chip{flex:none;min-height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:14.5px;white-space:nowrap}
+.chips.wrap{}
+@media (max-height:520px){.chips.wrap{flex-wrap:nowrap;max-height:none}.chips{padding-top:6px}}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .chip.mine{border-style:dashed}
 .sm{font-size:12.5px;color:var(--muted);font-weight:650;flex:none}
@@ -531,7 +533,7 @@ function persist(){clearTimeout(saveT);saveT=setTimeout(flush,300);}
 function hist(){st.hist.push(JSON.stringify(st.doc));if(st.hist.length>100)st.hist.shift();}
 function changed(){st.touched=true;persist();render();}
 function undo(){if(!st.hist.length)return;st.doc=JSON.parse(st.hist.pop());st.sec=Math.min(st.sec,st.doc.secs.length-1);st.sel=null;changed();toast('Rückgängig gemacht');}
-function load(d){if(!d||d.app!=='lebeschriftung'||!Array.isArray(d.secs))throw new Error('bad');d.meta={projekt:'',verteiler:'',ort:'',...d.meta};d.te=d.te||12;ensure2(d);st.doc=d;st.sec=0;st.sel=null;st.hist=[];if(d.secs.some(s=>s.kind==='knx'?s.akt.length:s.t.some(Boolean)))st.touched=true;flush();render();}
+function load(d){if(!d||d.app!=='lebeschriftung'||!Array.isArray(d.secs))throw new Error('bad');d.meta={projekt:'',verteiler:'',ort:'',...d.meta};d.te=d.te||12;ensure2(d);st.doc=d;st.sec=0;st.sel=null;st.hist=[];st.touched=false;if(d.secs.some(s=>s.kind==='knx'?s.akt.length:s.t.some(Boolean)))st.touched=true;flush();render();}
 function ensure2(d){const vb=d.secs.filter(x=>x.kind==='liste'&&/^Verteiler Beschriftung/.test(x.title));if(vb.length===1){if(vb[0].title==='Verteiler Beschriftung')vb[0].title='Verteiler Beschriftung 1';d.secs.splice(d.secs.indexOf(vb[0])+1,0,liste('Verteiler Beschriftung 2',30));}return d;}
 const sec=()=>st.doc.secs[st.sec];
 /* ---------- render ---------- */
@@ -612,8 +614,8 @@ ed.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.id==='eDelAk'){if(!arm(b,'Wirklich löschen?'))return;hist();s.akt.splice(st.sel.a,1);st.sel=null;changed();return;}
 });
 body.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const s=sec();ed._typed=false;
-  if(b.dataset.row!==undefined){st.sel=+b.dataset.row;render();return;}
-  if(b.dataset.ak){const [a,c]=b.dataset.ak.split(',').map(Number);st.sel={a,c};render();return;}
+  if(b.dataset.row!==undefined){st.sel=+b.dataset.row;render();scrollSel();return;}
+  if(b.dataset.ak){const [a,c]=b.dataset.ak.split(',').map(Number);st.sel={a,c};render();scrollSel();return;}
   if(b.dataset.more){hist();const n=+b.dataset.more;s.n+=n;for(let i=0;i<n;i++)s.t.push('');changed();return;}
   if(b.hasAttribute('data-less')){let n=s.n;while(n>6&&!s.t[n-1])n--;if(n===s.n){toast('Am Ende ist nichts leer');return;}hist();s.n=n;s.t.length=n;if(st.sel!==null&&st.sel>=n)st.sel=null;changed();return;}
   if(b.dataset.addak){hist();const n=+b.dataset.addak;s.akt.push({lab:'A'+(s.akt.length+1),ch:Array.from({length:n},()=>'')});st.sel={a:s.akt.length-1,c:0};changed();scrollSel();return;}

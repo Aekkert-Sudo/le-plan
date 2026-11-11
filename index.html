@@ -1562,7 +1562,7 @@ async function menuClick(e){
 }
 function loadDoc(d){if(!d||d.app!=='verteilerplan'||!Array.isArray(d.groups))throw new Error('bad');
   d.meta={...blankMeta(),...d.meta};d.opt={cover:false,liste:false,...d.opt};d.ein={...blankEin(),...d.ein};d.id=d.id||uid();
-  st.doc=d;st.si=0;st.hist=[];st.edit=null;if(d.groups.length||d.ein.on)st.touched=true;flushSave();render();fit();}
+  st.doc=d;st.si=0;st.hist=[];st.edit=null;st.touched=!!(d.groups.length||d.ein.on);flushSave();render();fit();}
 const fileBase=()=>projName(st.doc).replace(/[\\/:*?"<>|·]+/g,' ').replace(/\s+/g,' ').trim().slice(0,80)||'Verteilerplan';
 
 /* ================= export ================= */
