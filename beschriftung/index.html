@@ -697,7 +697,7 @@ function buildPDF(){
       const x=XS[col];pdf.setDrawColor(0);pdf.setTextColor(0);pdf.setLineWidth(0.25);pdf.rect(x,Y0,CW,LH);
       let iw=CW*0.8,ih=iw/LOGO_R;if(ih>LH-5){ih=LH-5;iw=ih*LOGO_R;}
       try{pdf.addImage(LOGO,'JPEG',x+(CW-iw)/2,Y0+(LH-ih)/2,iw,ih,'logo','FAST');}catch(e){pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.text('LEWIN & EKKERT ELEKTROTECHNIK',x+CW/2,Y0+LH/2+2,{align:'center'});}
-      if(s.kind==='liste'){pdf.setFontSize(8.5);pdf.setFont('helvetica','bold');pdf.text(s.title,x,Y0+LH+3.5);}
+      if(s.kind==='liste'){pdf.setFontSize(8.5);pdf.setFont('helvetica','bold');pdf.text(s.title.replace(/^(Verteiler Beschriftung)\s+\d+$/,'$1'),x,Y0+LH+3.5);}
       let y=Y0+LH+GAP;pdf.rect(x,y,NW,RH);pdf.rect(x+NW,y,CW-NW,RH);pdf.setFont('helvetica','bold');pdf.setFontSize(FS);const BL=RH/2+FS*0.125;pdf.text('Nr.',x+NW/2,y+BL,{align:'center'});pdf.text('Bezeichnung',x+NW+(CW-NW)/2,y+BL,{align:'center'});
       rows.slice(p*PER,(p+1)*PER).forEach(r=>{y+=RH;pdf.rect(x,y,NW,RH);pdf.rect(x+NW,y,CW-NW,RH);
         pdf.setFont('helvetica','bold');pdf.setFontSize(FS);if(r.nr)pdf.text(r.nr,x+NW/2,y+BL,{align:'center'});
