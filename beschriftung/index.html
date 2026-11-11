@@ -516,7 +516,7 @@ const CHIPS_EDV=['Wohnzimmer','Schlafzimmer','Kinderzimmer 1','Kinderzimmer 2','
 /* ---------- model ---------- */
 const liste=(title,n,t=[])=>({id:uid(),kind:'liste',title,n,t:Array.from({length:n},(_,i)=>t[i]||'')});
 const knx=(akt=[])=>({id:uid(),kind:'knx',title:'KNX Aktoren',akt});
-function blank(n=1){return {app:'lebeschriftung',id:uid(),meta:{projekt:'',verteiler:'',ort:''},te:12,secs:Array.from({length:n},(_,i)=>liste('Verteiler Beschriftung '+(i+1),30))};}
+function blank(n=2){return {app:'lebeschriftung',id:uid(),meta:{projekt:'',verteiler:'',ort:''},te:12,secs:Array.from({length:n},(_,i)=>liste('Verteiler Beschriftung '+(i+1),30))};}
 const nextVB=()=>'Verteiler Beschriftung '+(st.doc.secs.filter(x=>x.kind==='liste'&&/^Verteiler Beschriftung/.test(x.title)).length+1);
 function settings(){return {mail:'andreas-ekkert@online.de',...J(KEY+'.set',{})};}
 const st={doc:null,sec:0,sel:null,view:'list',span:1,hist:[],touched:false};
@@ -531,7 +531,8 @@ function persist(){clearTimeout(saveT);saveT=setTimeout(flush,300);}
 function hist(){st.hist.push(JSON.stringify(st.doc));if(st.hist.length>100)st.hist.shift();}
 function changed(){st.touched=true;persist();render();}
 function undo(){if(!st.hist.length)return;st.doc=JSON.parse(st.hist.pop());st.sec=Math.min(st.sec,st.doc.secs.length-1);st.sel=null;changed();toast('Rückgängig gemacht');}
-function load(d){if(!d||d.app!=='lebeschriftung'||!Array.isArray(d.secs))throw new Error('bad');d.meta={projekt:'',verteiler:'',ort:'',...d.meta};d.te=d.te||12;st.doc=d;st.sec=0;st.sel=null;st.hist=[];if(d.secs.some(s=>s.kind==='knx'?s.akt.length:s.t.some(Boolean)))st.touched=true;flush();render();}
+function load(d){if(!d||d.app!=='lebeschriftung'||!Array.isArray(d.secs))throw new Error('bad');d.meta={projekt:'',verteiler:'',ort:'',...d.meta};d.te=d.te||12;ensure2(d);st.doc=d;st.sec=0;st.sel=null;st.hist=[];if(d.secs.some(s=>s.kind==='knx'?s.akt.length:s.t.some(Boolean)))st.touched=true;flush();render();}
+function ensure2(d){const vb=d.secs.filter(x=>x.kind==='liste'&&/^Verteiler Beschriftung/.test(x.title));if(vb.length===1){if(vb[0].title==='Verteiler Beschriftung')vb[0].title='Verteiler Beschriftung 1';d.secs.splice(d.secs.indexOf(vb[0])+1,0,liste('Verteiler Beschriftung 2',30));}return d;}
 const sec=()=>st.doc.secs[st.sec];
 /* ---------- render ---------- */
 const body=$('#body'),ed=$('#ed'),bar=$('#bar'),layer=$('#layer');
@@ -542,7 +543,7 @@ function render(){
   const d=st.doc,s=sec();
   $('#tProj').textContent=pname(d);$('#tSub').textContent=s.title+(s.kind==='liste'?` · ${s.n} Plätze`:` · ${s.akt.length} Aktoren`);
   $('#bUndo').disabled=!st.hist.length;
-  bar.innerHTML=d.secs.map((x,i)=>`<button class="tab" data-sec="${i}" aria-pressed="${i===st.sec}">${esc(x.title.replace(/^Verteiler /,''))}</button>`).join('')+`<button class="tab" data-addvb>+ Beschriftung ${d.secs.filter(x=>x.kind==='liste'&&/^Verteiler Beschriftung/.test(x.title)).length+1}</button><button class="tab" data-addsec>Mehr …</button>`;
+  bar.innerHTML=d.secs.map((x,i)=>`<button class="tab" data-sec="${i}" aria-pressed="${i===st.sec}">${esc(x.title.replace(/^Verteiler /,''))}</button>`).join('')+`<button class="tab" data-addsec>Mehr …</button>`;
   const top=body.scrollTop;
   body.innerHTML=s.kind==='knx'?knxHTML(s):(st.view==='board'?boardHTML(s):listHTML(s));
   body.scrollTop=top;renderEd();
@@ -629,7 +630,7 @@ function sheet(title,html,tabs=''){layer.innerHTML=`<div class="scrim" data-clos
   layer.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click',closeSheet));return layer.querySelector('.sheet');}
 function arm(b,txt){if(b.classList.contains('armed'))return true;const o=b.innerHTML;b.classList.add('armed');if(b.classList.contains('ib'))toast('Zum Löschen noch einmal tippen');else b.textContent=txt;setTimeout(()=>{if(b.isConnected){b.classList.remove('armed');b.innerHTML=o;}},3500);return false;}
 function openAddSec(){
-  const sh=sheet('Abschnitte',`<div class="list"><button class="btn pri" data-a="vt30">${esc(nextVB())} (1–30)</button><button class="btn" data-a="knx">KNX Aktoren mit Kanälen</button><button class="btn" data-a="edv">EDV Beschriftung 1–30</button></div>
+  const sh=sheet('Abschnitte',`<div class="list"><button class="btn" data-a="knx">KNX Aktoren mit Kanälen</button><button class="btn" data-a="edv">EDV Beschriftung 1–30</button></div>
    <div class="lbl">Aktueller Abschnitt</div><label class="f">Überschrift<input class="in" id="sT" value="${esc(sec().title)}"></label>
    <div class="row" style="margin-top:12px"><button class="btn warnb" data-delsec ${st.doc.secs.length<2?'disabled':''}>Abschnitt löschen</button></div>`);
   sh.addEventListener('input',e=>{if(e.target.id==='sT'){sec().title=e.target.value;st.touched=true;persist();render();}});
@@ -647,7 +648,7 @@ function reMenu(){const b=layer.querySelector('.sh-body');if(b)b.innerHTML=menuB
 function menuBody(){const d=st.doc,s=settings();
   if(mTab==='proj'){const idx=readIndex().sort((a,b)=>(b.ts||0)-(a.ts||0));const ts=d.ts?new Date(d.ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'noch nicht';
     return `<div class="row" style="margin-top:6px"><button class="btn pri" data-save>Speichern</button><span class="note" style="margin:0;flex:1;min-width:180px">Speichert auf diesem Gerät. Zuletzt: ${ts}. Passiert auch automatisch.</span></div>
-    <div class="lbl">Neue Beschriftung</div><div class="row"><button class="btn" data-new="1">Eine Beschriftung</button><button class="btn" data-new="2">Zwei Beschriftungen (1 und 2)</button></div>
+    <div class="lbl">Neue Beschriftung</div><div class="row"><button class="btn" data-new="2">Neu (leer)</button></div>
     <div class="lbl">Meine Beschriftungen</div><div class="list">${idx.map(p=>`<div class="li ${p.id===d.id?'cur':''}"><button class="nm" data-open="${p.id}">${esc(p.name)}</button><span class="no">${new Date(p.ts||0).toLocaleDateString('de-DE')}</span>${p.id===d.id?'':`<button class="ib dang" data-del="${p.id}" aria-label="Löschen">${TRASH}</button>`}</div>`).join('')||'<p class="note">Noch nichts gespeichert.</p>'}</div>
     <div class="lbl">Meine Vorlagen</div><div class="row"><button class="btn" data-savetpl>Aktuelle als Vorlage speichern</button></div>
     <div class="list">${readTpl().map(t=>`<div class="li"><button class="nm" data-tpl="${t.id}">${esc(t.name)}</button><button class="ib dang" data-deltpl="${t.id}" aria-label="Vorlage löschen">${TRASH}</button></div>`).join('')||'<p class="note">Noch keine eigene Vorlage. Eine Vorlage ist eine Kopie, die du immer wieder öffnen kannst.</p>'}</div>
@@ -657,7 +658,7 @@ function menuBody(){const d=st.doc,s=settings();
     <label class="f">Verteiler<input class="in" data-meta="verteiler" value="${esc(d.meta.verteiler)}" placeholder="z. B. UV Wohnung 3"></label>
     <label class="f">Ort<input class="in" data-meta="ort" value="${esc(d.meta.ort)}"></label>`;
   if(mTab==='send')return `<p class="note">Erzeugt ein PDF wie deine Excel-Vorlage mit dem Firmenlogo oben, fertig zum Ausdrucken.</p>
-    <div class="lbl">Ausdruck</div><div class="row"><button class="chip" data-cols="1" aria-pressed="${(d.cols||2)===1}">Einspaltig – je Beschriftung eine Seite (A4 hoch)</button><button class="chip" data-cols="2" aria-pressed="${(d.cols||2)===2}">Zweispaltig – Beschriftung 1 links, 2 rechts (A4 quer)</button></div>
+    <div class="lbl">Ausdruck</div><div class="row"><button class="chip" data-cols="1" aria-pressed="${(d.cols||2)===1}">Einspaltig – eine Beschriftung pro Seite (A4 hoch)</button><button class="chip" data-cols="2" aria-pressed="${(d.cols||2)===2}">Zweispaltig – Beschriftung 1 links, 2 rechts (A4 quer)</button></div>
     <label class="f">An E-Mail-Adresse<input class="in" id="mMail" value="${esc(s.mail)}" inputmode="email"></label>
     <div class="list" style="margin-top:12px"><button class="btn pri" data-mail>PDF per Mail senden</button><button class="btn" data-pdf>PDF speichern</button></div>
     <p class="note">Am Telefon öffnet sich das Teilen-Menü: dort „Mail“ wählen und ${esc(s.mail)} als Empfänger eintragen. Am Rechner wird das PDF gespeichert und eine Mail vorbereitet.</p>`;
@@ -692,7 +693,7 @@ function buildPDF(){
   const pdf=new window.jspdf.jsPDF({orientation:ori,unit:'mm',format:'a4',compress:true});
   let slot=0;const PER=30,RH=two?5.5:8,FS=two?10.5:12,CW=two?128:160,NW=13,XS=two?[14,155]:[25],Y0=two?6:8,LH=two?23:27,GAP=4.6;let first=true;
   const sub=[d.meta.projekt,d.meta.verteiler,d.meta.ort].filter(Boolean).join(' · ');
-  d.secs.forEach(s=>{const rows=pdfRows(s);if(!rows.length)return;
+  d.secs.forEach((s,si)=>{const rows=pdfRows(s);if(!rows.length)return;if(si>0&&s.kind==='liste'&&!s.t.some(Boolean)&&slot%XS.length===0)return;
     for(let p=0;p*PER<rows.length;p++){const col=slot%XS.length;slot++;if(col===0){if(!first)pdf.addPage('a4',ori);first=false;}
       const x=XS[col];pdf.setDrawColor(0);pdf.setTextColor(0);pdf.setLineWidth(0.25);pdf.rect(x,Y0,CW,LH);
       let iw=CW*0.8,ih=iw/LOGO_R;if(ih>LH-5){ih=LH-5;iw=ih*LOGO_R;}
@@ -733,7 +734,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(layer.innerHTML)
 window.addEventListener('pagehide',flush);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush();});
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 window.__leb={st,buildPDF,EX,load,blank};
-(function(){let d=null;const cur=store.get(KEY+'.cur');if(cur)d=J(KEY+'.doc.'+cur,null);if(!d||d.app!=='lebeschriftung')d=blank(1);d.meta={projekt:'',verteiler:'',ort:'',...d.meta};d.te=d.te||12;st.doc=d;render();})();
+(function(){let d=null;const cur=store.get(KEY+'.cur');if(cur)d=J(KEY+'.doc.'+cur,null);if(!d||d.app!=='lebeschriftung')d=blank(2);d.meta={projekt:'',verteiler:'',ort:'',...d.meta};d.te=d.te||12;ensure2(d);st.doc=d;render();})();
 })();
 </script>
 
