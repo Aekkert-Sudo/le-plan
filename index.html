@@ -1507,6 +1507,10 @@ function menuBody(){
     return `<div class="row" style="margin:6px 0 4px"><button class="btn pri" data-savenow>Speichern</button><span class="note" style="margin:0">${cloud.on?'Speichert den Plan in deinem Claude-Konto. Er ist beim nächsten Öffnen wieder da, auch auf deinen anderen Geräten.':'Speichert den Plan in der App auf diesem Gerät.'} Zuletzt gespeichert: ${ts}. Das passiert auch automatisch bei jeder Änderung.</span></div>
       <div class="row" style="margin:10px 0 4px"><button class="btn" data-newproj>${PLUS} Neuer Verteiler</button></div>
       <div class="list">${idx.map(p=>`<div class="li ${p.id===d.id?'cur':''}"><button class="nm" data-openproj="${p.id}">${esc(p.name)}</button><span class="no">${new Date(p.ts||0).toLocaleDateString('de-DE')}</span>${p.id===d.id?'':`<button class="ib dang" data-delproj="${p.id}" aria-label="Projekt löschen">${TRASH}</button>`}</div>`).join('')}</div>
+      <div class="lbl">Plan von Claude einfügen</div>
+      <p class="note">Schick Claude ein Foto vom Verteiler. Claude schreibt dir einen Plan-Code. Den Code kopieren, hier einfügen und „Plan übernehmen“ tippen. Es entsteht ein neues Projekt, das du ganz normal bearbeiten kannst.</p>
+      <textarea id="m-code" rows="3" placeholder="Plan-Code hier einfügen" style="width:100%;box-sizing:border-box;font:13px/1.4 ui-monospace,Consolas,monospace;padding:8px;border-radius:10px;border:1px solid #c9ccc4"></textarea>
+      <div class="row" style="margin-top:6px"><button class="btn" data-pastecode>Einfügen</button><button class="btn pri" data-importcode>Plan übernehmen</button></div>
       <div class="lbl">Meine Vorlagen</div>
       <div class="row"><button class="btn" data-savetpl>Aktuellen Plan als Vorlage speichern</button></div>
       <p class="note">Eine Vorlage ist eine Kopie, die du immer wieder öffnen kannst. Beim Öffnen entsteht ein neues Projekt, die Vorlage bleibt unverändert.</p>
@@ -1554,6 +1558,13 @@ async function menuClick(e){
   if(b.dataset.openproj){flushSave();try{loadDoc(JSON.parse(store.get(APPKEY+'.doc.'+b.dataset.openproj)));closeSheet();}catch(err){toast('Projekt konnte nicht gelesen werden');}return;}
   if(b.dataset.delproj){if(!arm(b))return;const id=b.dataset.delproj;store.del(APPKEY+'.doc.'+id);store.set(APPKEY+'.index',JSON.stringify(readIndex().filter(x=>x.id!==id)));rerenderMenu();toast('Projekt gelöscht');return;}
   if(b.dataset.tpl!==undefined){flushSave();const t=TEMPLATES[+b.dataset.tpl].make();loadDoc(t);closeSheet();toast('Vorlage geöffnet');return;}
+  if(b.hasAttribute('data-pastecode')){try{const t=await navigator.clipboard.readText();const ta=layer.querySelector('#m-code');if(ta)ta.value=t;}catch(err){toast('Bitte lange ins Feld tippen und „Einsetzen“ wählen');}return;}
+  if(b.hasAttribute('data-importcode')){const ta=layer.querySelector('#m-code');const raw=(ta&&ta.value||'').trim();
+    try{const i=raw.indexOf('{'),j=raw.lastIndexOf('}');if(i<0||j<i)throw 0;const c=JSON.parse(raw.slice(i,j+1));if(c.app!=='verteilerplan'||!Array.isArray(c.groups))throw 0;
+      c.id=uid();const blank=blankDoc();c.v=c.v||3;
+      c.groups=c.groups.map((g,n)=>{const base=GR(g.preset||(g.typ==='aktor'?'aktor':'direkt'),g.nr||n+1);const r=Object.assign(base,g,{id:uid()});delete r.preset;delete r.nr;r.items=(Array.isArray(g.items)?g.items:[]).map(x=>AB(Object.assign({},x,{id:undefined})));r.items.forEach(x=>{if(!x.id)x.id=uid();});return r;});
+      flushSave();loadDoc(c);closeSheet();toast('Plan übernommen – bitte prüfen und anpassen');}
+    catch(err){toast('Der Code ist unvollständig oder falsch. Bitte ganz kopieren.');}return;}
   if(b.hasAttribute('data-savetpl')){flushSave();const t=readTpl();t.unshift({id:uid(),name:projName(d),ts:Date.now(),doc:clean(d)});if(!store.set(APPKEY+'.tpl',JSON.stringify(t)))toast('Vorlage konnte nicht gespeichert werden');else toast('Als Vorlage gespeichert');rerenderMenu();return;}
   if(b.dataset.mytpl){const t=readTpl().find(x=>x.id===b.dataset.mytpl);if(t){flushSave();const c=JSON.parse(JSON.stringify(t.doc));c.id=uid();loadDoc(c);closeSheet();toast('Vorlage geöffnet');}return;}
   if(b.dataset.deltpl){if(!arm(b))return;store.set(APPKEY+'.tpl',JSON.stringify(readTpl().filter(x=>x.id!==b.dataset.deltpl)));rerenderMenu();toast('Vorlage gelöscht');return;}

@@ -1,0 +1,50 @@
+{
+  "name": "le-plan",
+  "productName": "L & E Plan",
+  "version": "1.0.0",
+  "description": "L & E Plan – Verteilerpläne",
+  "author": "L & E",
+  "main": "main.js",
+  "scripts": {
+    "app": "rm -rf app && mkdir app && cp ../index.html ../manifest.webmanifest ../icon-180.png ../icon-192.png ../icon-512.png app/",
+    "dist": "npm run app && electron-builder --win dir --x64 && makensis -V2 -DVERSION=$npm_package_version installer.nsi"
+  },
+  "build": {
+    "appId": "de.lewin-ekkert.leplan",
+    "productName": "L & E Plan",
+    "files": [
+      "main.js",
+      "app/**/*",
+      "build/icon.ico"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "afterPack": "./afterPack.js",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "L & E Plan",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "L-und-E-Plan-Setup.${ext}",
+      "language": "1031",
+      "deleteAppDataOnUninstall": false
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "png-to-ico": "^3.0.2",
+    "resedit": "^3.1.1"
+  }
+}
