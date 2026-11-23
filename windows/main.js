@@ -18,7 +18,7 @@ const readLocal = () => fs.readFileSync(path.join(appDir(), 'index.html'));
 function versionText() {
   const m = readLocal().toString('utf8').match(/leplan-ver:(\d{8,14})/);
   const t = fs.statSync(path.join(appDir(), 'index.html')).mtime;
-  return m ? m[1] : t.toLocaleDateString('de-DE');
+  return m ? m[1].replace(/^(\d{4})(\d\d)(\d\d).*/, '$3.$2.$1') : t.toLocaleDateString('de-DE');
 }
 
 async function checkUpdate(manual) {
@@ -32,7 +32,8 @@ async function checkUpdate(manual) {
     if (manual) dialog.showMessageBox(win, { type: 'info', title: 'Update', message: 'Keine Verbindung zum Internet.', detail: 'Die App funktioniert weiter wie bisher. Für ein Update einfach später mit Internet nochmal „Nach Update suchen“ wählen.' });
     return;
   }
-  if (hash(remote) === hash(readLocal())) {
+  const ver = b => +((b.toString('utf8').match(/leplan-ver:(\d+)/) || [0, 0])[1]);
+  if (hash(remote) === hash(readLocal()) || ver(remote) <= ver(readLocal())) {
     if (manual) dialog.showMessageBox(win, { type: 'info', title: 'Update', message: 'L & E Plan ist auf dem neuesten Stand.' });
     return;
   }
